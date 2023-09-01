@@ -1,0 +1,401 @@
+{
+	"info": {
+		"_postman_id": "db950478-a0d1-48ea-be86-1213af91d0ae",
+		"name": "minio",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "7821151",
+		"_collection_link": "https://lively-comet-8198.postman.co/workspace/An%C4%B1l~d33d46fc-ebc0-4ccb-81ba-caceff009d2d/collection/7821151-db950478-a0d1-48ea-be86-1213af91d0ae?action=share&source=collection_link&creator=7821151"
+	},
+	"item": [
+		{
+			"name": "buckets",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": []
+				},
+				"url": {
+					"raw": "{{url}}/buckets?objects=true",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"buckets"
+					],
+					"query": [
+						{
+							"key": "objects",
+							"value": "true"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "bucket",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"const   response    =   pm.response",
+							"        json        =   response.json()",
+							"pm.test(\"Status code is 201\", function () {",
+							"    response.to.have.status(201)",
+							"    pm.collectionVariables.set(\"bucketName\", json.name)",
+							"    var tags = pm.response.json().tags",
+							"    var firstTag = Object.entries(tags)[0]",
+							"    pm.collectionVariables.set(\"firstTagKey\", firstTag[0])",
+							"    pm.collectionVariables.set(\"firstTagValue\", firstTag[1])",
+							"})"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"function generateRandomString(length) {",
+							"    const characters = 'abcdefghijklmnopqrstuvwxyz0123456789';",
+							"    let randomString = '';",
+							"",
+							"    for (let i = 0; i < length; i++) {",
+							"        const randomIndex = Math.floor(Math.random() * characters.length);",
+							"        randomString += characters.charAt(randomIndex);",
+							"    }",
+							"",
+							"    return randomString;",
+							"}",
+							"",
+							"function generateValidBucketName() {",
+							"    const minLength = 3;",
+							"    const maxLength = 63;",
+							"",
+							"    while (true) {",
+							"        const randomLength = Math.floor(Math.random() * (maxLength - minLength + 1)) + minLength;",
+							"        const randomString = generateRandomString(randomLength);",
+							"",
+							"        if (",
+							"            /^[a-z0-9][a-z0-9.-]*[a-z0-9]$/.test(randomString) &&",
+							"            !/\\.\\./.test(randomString) &&",
+							"            !/^xn--/.test(randomString) &&",
+							"            !/^sthree-/.test(randomString) &&",
+							"            !/^sthree-configurator/.test(randomString) &&",
+							"            !/-s3alias$/.test(randomString) &&",
+							"            !/--ol-s3$/.test(randomString) &&",
+							"            !/\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}/.test(randomString) &&",
+							"            !/\\./.test(randomString)",
+							"        ) {",
+							"            return randomString;",
+							"        }",
+							"    }",
+							"}",
+							"pm.collectionVariables.set(\"randomBucketName\", generateValidBucketName())",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"name\": \"{{randomBucketName}}\",\n    \"policy\": \"{\\\"Statement\\\": [{\\\"Action\\\": [\\\"s3:GetBucketLocation\\\", \\\"s3:ListBucket\\\"], \\\"Effect\\\": \\\"Allow\\\", \\\"Principal\\\": \\\"*\\\", \\\"Resource\\\": \\\"arn:aws:s3:::{{randomBucketName}}\\\"}, {\\\"Action\\\": \\\"s3:GetObject\\\", \\\"Effect\\\": \\\"Allow\\\", \\\"Principal\\\": \\\"*\\\", \\\"Resource\\\": \\\"arn:aws:s3:::{{randomBucketName}}/*\\\"}], \\\"Version\\\": \\\"2012-10-17\\\"}\",\n    \"tags\": {\n        \"anil1\": \"senocak1\",\n        \"anil2\": \"senocak2\"\n    }\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/buckets",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"buckets"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "bucket",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": []
+				},
+				"url": {
+					"raw": "{{url}}/buckets/{{bucketName}}?objects=true",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"buckets",
+						"{{bucketName}}"
+					],
+					"query": [
+						{
+							"key": "objects",
+							"value": "true"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "bucket",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": []
+				},
+				"url": {
+					"raw": "{{url}}/buckets/{{bucketName}}?force=true",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"buckets",
+						"{{bucketName}}"
+					],
+					"query": [
+						{
+							"key": "force",
+							"value": "true"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "files",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"const   response    =   pm.response",
+							"        json        =   response.json()",
+							"pm.test(\"Status code is 201\", function () {",
+							"    response.to.have.status(201)",
+							"    pm.collectionVariables.set(\"fileName\", json.fileName)",
+							"})"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "file",
+							"type": "file",
+							"src": "/Users/tcasenocak/Desktop/Screenshot 2023-08-16 at 14.19.16.png"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{url}}/buckets/{{bucketName}}/files",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"buckets",
+						"{{bucketName}}",
+						"files"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "files",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": []
+				},
+				"url": {
+					"raw": "{{url}}/buckets/{{bucketName}}/files",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"buckets",
+						"{{bucketName}}",
+						"files"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "files",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "[\n    \"{{fileName}}\"\n]",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/buckets/{{bucketName}}/files",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"buckets",
+						"{{bucketName}}",
+						"files"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "file",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/buckets/{{bucketName}}/files/{{fileName}}",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"buckets",
+						"{{bucketName}}",
+						"files",
+						"{{fileName}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "file",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "[\n    \"4e1cc3a08a664b288012f5f7fd7bf960.png\",\n    \"dc9b608d67b34a95b312a040ef092978.png\"\n]",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/buckets/{{bucketName}}/files/{{fileName}}",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"buckets",
+						"{{bucketName}}",
+						"files",
+						"{{fileName}}"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "url",
+			"value": "http://localhost:8085",
+			"type": "string"
+		},
+		{
+			"key": "randomBucketName",
+			"value": ""
+		},
+		{
+			"key": "bucketName",
+			"value": ""
+		},
+		{
+			"key": "fileName",
+			"value": ""
+		},
+		{
+			"key": "tag",
+			"value": ""
+		},
+		{
+			"key": "firstTagKey",
+			"value": ""
+		},
+		{
+			"key": "firstTagValue",
+			"value": ""
+		}
+	]
+}
