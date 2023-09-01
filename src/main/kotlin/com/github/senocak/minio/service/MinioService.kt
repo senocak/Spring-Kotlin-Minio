@@ -30,11 +30,6 @@ import io.minio.messages.Event
 import io.minio.messages.Item
 import io.minio.messages.NotificationRecords
 import io.minio.messages.Tags
-import java.io.ByteArrayInputStream
-import java.io.InputStream
-import java.time.LocalDateTime
-import java.util.Locale
-import java.util.UUID
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
@@ -42,10 +37,14 @@ import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Service
 import org.springframework.util.StringUtils
 import org.springframework.web.multipart.MultipartFile
-
+import java.io.ByteArrayInputStream
+import java.io.InputStream
+import java.time.LocalDateTime
+import java.util.Locale
+import java.util.UUID
 
 @Service
-class MinioService(private val minioClient: MinioClient, private val minioConfig: MinioConfig){
+class MinioService(private val minioClient: MinioClient, private val minioConfig: MinioConfig) {
     private val log: Logger = LoggerFactory.getLogger(this.javaClass)
 
     fun listBuckets(): List<BucketDto> =
@@ -53,11 +52,12 @@ class MinioService(private val minioClient: MinioClient, private val minioConfig
             .map { b: Bucket -> BucketDto(name = b.name(), creationDate = b.creationDate(), policy = getBucketPolicy(bucketName = b.name())) }.toList()
             .also { log.info("listBuckets: $it") }
 
-    fun makeBucket(bucket: String, region: String? = null, policy: String? = null): Unit  =
+    fun makeBucket(bucket: String, region: String? = null, policy: String? = null): Unit =
         minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucket).region(region).build())
             .also {
-                if (policy != null)
+                if (policy != null) {
                     minioClient.setBucketPolicy(SetBucketPolicyArgs.builder().bucket(bucket).config(policy).build())
+                }
             }
             .also { log.info("makeBucket: $it") }
 
@@ -75,8 +75,9 @@ class MinioService(private val minioClient: MinioClient, private val minioConfig
     fun uploadFile(multipartFile: MultipartFile, bucketName: String = minioConfig.bucketName): FileResponse {
         val fileType: String = getFileType(type = StringUtils.getFilenameExtension(multipartFile.originalFilename))
         return try {
-            if (!bucketExists(bucketName = bucketName))
+            if (!bucketExists(bucketName = bucketName)) {
                 this.makeBucket(bucket = bucketName)
+            }
             val fileName: String = multipartFile.originalFilename ?: throw Exception("originalFilename error")
             val objectName: String = UUID.randomUUID().toString().replace(regex = "-".toRegex(), replacement = "") + fileName.substring(fileName.lastIndexOf(string = "."))
             minioClient.putObject(
@@ -86,11 +87,8 @@ class MinioService(private val minioClient: MinioClient, private val minioConfig
                     .build()
             )
             FileResponse(fileName = objectName, fileSize = multipartFile.size, contentType = fileType)
-                .also {
-                        it: FileResponse ->
-                    it.createdTime = LocalDateTime.now()
-                    log.info("uploadFile: $it")
-                }
+                .also { it: FileResponse -> it.createdTime = LocalDateTime.now() }
+                .also { log.info("uploadFile: $it") }
         } catch (e: Exception) {
             log.error("Exception occurred. ${e.message}")
             throw e
@@ -98,7 +96,7 @@ class MinioService(private val minioClient: MinioClient, private val minioConfig
     }
 
     private fun getFileType(type: String?): String =
-         when {
+        when {
             type == null -> throw Exception("Type can not be null")
             type.lowercase(Locale.getDefault()) in listOf("jpg", "jpeg", "gif", "png", "bmp", "pcx", "tga", "psd", "tiff") -> "image/$type"
             type.lowercase(Locale.getDefault()) in listOf("mp3", "ogg", "wav", "real", "ape", "module", "midi", "vqf", "cd") -> "audio/$type"
@@ -164,9 +162,10 @@ class MinioService(private val minioClient: MinioClient, private val minioConfig
 
     fun downloadObject(bucketName: String, objectName: String): InputStream {
         val statObject: StatObjectResponse = statObject(bucketName, objectName)
-        if (statObject.size() > 0)
+        if (statObject.size() > 0) {
             return minioClient.getObject(GetObjectArgs.builder().bucket(bucketName).`object`(objectName).build())
                 .also { log.info("downloadObject: bucketName: $bucketName, $it") }
+        }
         throw ServerException(omaErrorMessageType = OmaErrorMessageType.NOT_FOUND, statusCode = HttpStatus.NOT_FOUND)
             .also { log.error("ServerException: ${it.message}, bucketName: $bucketName, objectName: $objectName") }
     }

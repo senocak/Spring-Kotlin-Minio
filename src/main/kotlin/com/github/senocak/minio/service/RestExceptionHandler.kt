@@ -17,21 +17,33 @@ class RestExceptionHandler {
 
     @ExceptionHandler(ServerException::class)
     fun handleServerException(ex: ServerException): ResponseEntity<Any> =
-        generateResponseEntity(httpStatus = ex.statusCode, omaErrorMessageType = ex.omaErrorMessageType,
-            variables = ex.variables)
+        generateResponseEntity(
+            httpStatus = ex.statusCode,
+            omaErrorMessageType = ex.omaErrorMessageType,
+            variables = ex.variables
+        )
 
     @ExceptionHandler(ErrorResponseException::class)
     fun handleServerException(ex: ErrorResponseException): ResponseEntity<Any> =
-        generateResponseEntity(httpStatus = HttpStatus.FORBIDDEN, omaErrorMessageType = OmaErrorMessageType.GENERIC_SERVICE_ERROR,
-            variables = arrayOf(ex.message))
+        generateResponseEntity(
+            httpStatus = HttpStatus.FORBIDDEN,
+            omaErrorMessageType = OmaErrorMessageType.GENERIC_SERVICE_ERROR,
+            variables = arrayOf(ex.message)
+        )
 
     @ExceptionHandler(Exception::class)
     fun handleGeneralException(ex: Exception): ResponseEntity<Any> =
-        generateResponseEntity(httpStatus = HttpStatus.INTERNAL_SERVER_ERROR, variables = arrayOf(ex.message),
-            omaErrorMessageType = OmaErrorMessageType.GENERIC_SERVICE_ERROR)
+        generateResponseEntity(
+            httpStatus = HttpStatus.INTERNAL_SERVER_ERROR,
+            variables = arrayOf(ex.message),
+            omaErrorMessageType = OmaErrorMessageType.GENERIC_SERVICE_ERROR
+        )
 
-    private fun generateResponseEntity(httpStatus: HttpStatus, omaErrorMessageType: OmaErrorMessageType,
-                                       variables: Array<String?>): ResponseEntity<Any> {
+    private fun generateResponseEntity(
+        httpStatus: HttpStatus,
+        omaErrorMessageType: OmaErrorMessageType,
+        variables: Array<String?>
+    ): ResponseEntity<Any> {
         log.error("Exception is handled. HttpStatus: $httpStatus, OmaErrorMessageType: $omaErrorMessageType, variables: ${variables.toList()}")
         val exceptionDto: ExceptionDto = ExceptionDto(statusCode = httpStatus.value(), variables = variables)
             .also {

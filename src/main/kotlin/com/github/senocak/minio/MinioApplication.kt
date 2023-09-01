@@ -9,7 +9,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 
 @EnableAsync
 @SpringBootApplication
-class MinioApplication(private val customInterceptor: CustomInterceptor): WebMvcConfigurer {
+class MinioApplication(private val customInterceptor: CustomInterceptor) : WebMvcConfigurer {
     override fun addInterceptors(registry: InterceptorRegistry) {
         registry
             .addInterceptor(customInterceptor)
